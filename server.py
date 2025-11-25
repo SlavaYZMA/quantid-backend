@@ -33,26 +33,21 @@ def scrape_instagram(username):
 
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
-        # Имя
         name_tag = soup.find("h2")
         name = name_tag.get_text(strip=True) if name_tag else "Неизвестно"
 
-        # Био
         bio_tag = soup.find("div", class_=lambda x: x and "x1lliihq" in x)
         bio = bio_tag.get_text(strip=True) if bio_tag else "Без био"
 
-        # Посты
         posts = soup.find_all("div", class_="x1lliihq")[:25]
         captions = []
         images = []
 
         for p in posts:
-            # текст подписи
             text_tag = p.find("h1") or p.find("span", class_="x1lliihq")
             text = text_tag.get_text(strip=True)[:500] if text_tag else "Без текста"
             captions.append(text)
 
-            # ссылка на фото
             img = p.find("img")
             img_url = img["src"] if img and "src" in img.attrs else "Нет изображения"
             images.append(img_url)
@@ -83,7 +78,6 @@ def parse():
     if "error" in data:
         return jsonify(data), 500
 
-    # === Генерируем TXT-файл ===
     txt_content = f"""КВАНТОВЫЙ ПАСПОРТ ИДЕНТИЧНОСТИ
 Проект «Квантовая идентичность» · Влада Садик · 2025–2026
 
@@ -94,25 +88,18 @@ Instagram: @{data['username']}
 
 ────────────────────────────────────────
 ПОСЛЕДНИЕ ПОСТЫ (до 25 шт.)
-────────────────────────────────────────
-"""
+────────────────────────────────────────\n\n"""
 
     for i, (text, img) in enumerate(zip(data['captions'], data['images']), 1):
-        txt_content += f"\nПост {i:02d}\n"
-        txt_content += f"{text}\n"
-        txt_content += f"Фото: {img}\n"
-        txt_content += "─" * 50 + "\n"
+        txt_content += f"Пост {i:02d}\n{text}\nФото: {img}\n{'─' * 50}\n\n"
 
     filename = f"@{username}_quantum_mirror_2025.txt"
-
-    # Сохраняем временно на сервере
     with open(filename, "w", encoding="utf-8") as f:
         f.write(txt_content)
 
-    # Возвращаем JSON + ссылку на скачивание
     response = make_response(jsonify({
         "status": "success",
-        "download_url": f"/download?u={username}",
+        "download_url": f"https://quantid-backend.onrender.com/download?u={username}",
         "data": data
     }))
     response.headers["Access-Control-Allow-Origin"] = "*"
@@ -125,11 +112,11 @@ def download():
     if os.path.exists(filename):
         return send_file(filename, as_attachment=True, download_name=filename)
     else:
-        return "Файл не найден (возможно, просрочен)", 404
+        return "Файл не найден или устарел", 404
 
 @app.route('/')
 def health():
-    return "Quantum backend alive · Влада Садик 2025 ❤️"
+    return "quantid-backend alive · Влада Садик 2025 ❤️"
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
