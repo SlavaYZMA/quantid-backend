@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file, make_response
+from flask_cors import CORS
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
@@ -9,6 +10,7 @@ import os
 from datetime import datetime
 
 app = Flask(__name__)
+CORS(app)  # ← ЭТО САМОЕ ГЛАВНОЕ! Разрешает запросы с Netlify
 
 def scrape_instagram(username):
     options = Options()
@@ -25,11 +27,11 @@ def scrape_instagram(username):
 
     try:
         driver.get(f"https://www.instagram.com/{username}/")
-        time.sleep(10)
+        time.sleep(12)
 
         for _ in range(4):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(4)
+            time.sleep(5)
 
         soup = BeautifulSoup(driver.page_source, "html.parser")
 
@@ -102,7 +104,6 @@ Instagram: @{data['username']}
         "download_url": f"https://quantid-backend.onrender.com/download?u={username}",
         "data": data
     }))
-    response.headers["Access-Control-Allow-Origin"] = "*"
     return response
 
 @app.route('/download')
@@ -112,7 +113,7 @@ def download():
     if os.path.exists(filename):
         return send_file(filename, as_attachment=True, download_name=filename)
     else:
-        return "Файл не найден или устарел", 404
+        return "Файл не найден", 404
 
 @app.route('/')
 def health():
