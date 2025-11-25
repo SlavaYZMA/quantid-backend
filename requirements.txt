@@ -1,5 +1,0 @@
-Flask==3.0.3
-selenium==4.25.0
-beautifulsoup4==4.12.3
-Flask-CORS==4.0.1
-webdriver-manager==4.0.2
